@@ -2,89 +2,39 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>PDF Flipbook</title>
-
+    <title>My Permanent Flipbook</title>
     <script src="jquery.min.js"></script>
     <script src="turn.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
     <style>
-        body {
-            margin: 0;
-            background: #333;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #book {
-            width: 900px;
-            height: 600px;
-        }
-
-        .page {
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-        }
+        body { margin: 0; background: #333; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #book { width: 900px; height: 600px; }
+        .page { background: white; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
+        canvas { width: 100%; height: 100%; }
     </style>
 </head>
-
 <body>
-
-<div id="book"></div>
-
-<script>
-    const pdfUrl = "file.pdf"; // Pastikan file.pdf ada di folder yang sama (bukan di dalam folder 'pdf' jika kodenya begini)
-
-    pdfjsLib.getDocument(pdfUrl).promise.then(async (pdf) => {
-        const totalPages = pdf.numPages;
-        const book = document.getElementById("book");
-
-        // Loop secara berurutan (await) agar halaman tidak tertukar
-        for (let i = 1; i <= totalPages; i++) {
-            const page = await pdf.getPage(i);
-            const viewport = page.getViewport({ scale: 1.5 });
-            
-            const div = document.createElement("div");
-            div.className = "page";
-            
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            
-            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-            
-            div.appendChild(canvas);
-            book.appendChild(div);
-        }
-
-        // Inisialisasi turn.js SETELAH semua halaman selesai di-render
-        $("#book").turn({
-            width: 900,
-            height: 600,
-            autoCenter: true,
-            display: 'double', // Menampilkan 2 halaman sekaligus seperti buku
-            acceleration: true,
-            gradients: true
+    <div id="book"></div>
+    <script>
+        const pdfUrl = "file.pdf"; 
+        pdfjsLib.getDocument(pdfUrl).promise.then(async (pdf) => {
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.0 }); // Scale 1.0 agar ringan
+                const div = document.createElement("div");
+                div.className = "page";
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d", { alpha: false });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+                div.appendChild(canvas);
+                document.getElementById("book").appendChild(div);
+                page.cleanup();
+            }
+            $("#book").turn({ width: 900, height: 600, autoCenter: true, display: 'double', acceleration: true });
         });
-    }).catch(err => {
-        console.error("Gagal memuat PDF: ", err);
-        alert("File PDF tidak ditemukan atau gagal dimuat. Pastikan file.pdf sudah di-upload.");
-    });
-</script>
-
+    </script>
 </body>
-</html>
-
-</body>
-
 </html>
 
